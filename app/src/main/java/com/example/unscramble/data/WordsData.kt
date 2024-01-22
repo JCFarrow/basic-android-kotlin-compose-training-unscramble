@@ -123,7 +123,6 @@ val allWords: Set<String> =
         "north",
         "nose",
         "night",
-        "name",
         "never",
         "negotiate",
         "number",
