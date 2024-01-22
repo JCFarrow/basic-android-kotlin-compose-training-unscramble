@@ -16,6 +16,7 @@
 package com.example.unscramble.ui
 
 import android.app.Activity
+import android.view.KeyEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -68,7 +70,6 @@ fun GameScreen(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(mediumPadding),
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
@@ -84,6 +85,7 @@ fun GameScreen(
             currentScrambledWord = gameUIState.currentScrambledWord,
             isGuessWrong = gameUIState.isGuessedWordWrong,
             currentWordCount = gameUIState.currentWordCount,
+            maxNumberOfWords = gameViewModel.maxNumberOfWords,
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
@@ -123,6 +125,13 @@ fun GameScreen(
             modifier = Modifier.padding(20.dp)
         )
     }
+
+    if (gameUIState.isGameOver) {
+        FinalScoreDialog(
+            score = gameUIState.score,
+            onPlayAgain = { gameViewModel.resetGame() }
+        )
+    }
 }
 
 @Composable
@@ -145,6 +154,7 @@ fun GameLayout(
     onKeyboardDone: () -> Unit,
     isGuessWrong: Boolean,
     currentWordCount: Int,
+    maxNumberOfWords: Int,
     currentScrambledWord: String,
     modifier: Modifier = Modifier) {
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
@@ -164,7 +174,7 @@ fun GameLayout(
                     .background(colorScheme.surfaceTint)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
                     .align(alignment = Alignment.End),
-                text = stringResource(R.string.word_count, currentWordCount),
+                text = stringResource(R.string.word_count, currentWordCount, maxNumberOfWords),
                 style = typography.titleMedium,
                 color = colorScheme.onPrimary
             )
@@ -181,7 +191,6 @@ fun GameLayout(
                 value = userGuess,
                 singleLine = true,
                 shape = shapes.large,
-                modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = colorScheme.surface,
                     unfocusedContainerColor = colorScheme.surface,
@@ -202,7 +211,16 @@ fun GameLayout(
                 ),
                 keyboardActions = KeyboardActions(
                     onDone = { onKeyboardDone() }
-                )
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onKeyEvent {event ->
+                        if (event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
+                            onKeyboardDone()
+                            true
+                        }
+                        false
+                    }
             )
         }
     }
@@ -245,7 +263,7 @@ private fun FinalScoreDialog(
     )
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun GameScreenPreview() {
     UnscrambleTheme {
